@@ -1,0 +1,153 @@
+// =============================================================================
+// CLICKBAIT - Database Schema Definition
+// "Don't Guess. Verify." - SIH 2026 Blockchain & Cybersecurity Project
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Enums
+// -----------------------------------------------------------------------------
+
+enum InstitutionStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum KeyStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum NoticeStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum VerificationResultStatus {
+  VERIFIED
+  TAMPERED
+  EXPIRED
+  REVOKED
+  UNVERIFIED
+  SUSPICIOUS
+}
+
+enum RiskLevel {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// -----------------------------------------------------------------------------
+// Models
+// -----------------------------------------------------------------------------
+
+/// Authorized Institution (e.g. University, Board, College)
+model Institution {
+  id              String            @id @default(uuid())
+  name            String
+  verifiedDomain  String            @unique
+  status          InstitutionStatus @default(PENDING)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  issuerKeys      IssuerKey[]
+  notices         Notice[]
+
+  @@index([verifiedDomain])
+  @@index([status])
+  @@map("institutions")
+}
+
+/// Registered Ed25519 Public Keys for Authorized Issuers
+model IssuerKey {
+  id            String      @id @default(uuid())
+  institutionId String
+  publicKey     String      @unique // Base64 or Hex-encoded Ed25519 Public Key
+  keyStatus     KeyStatus   @default(ACTIVE)
+  createdAt     DateTime    @default(now())
+  expiresAt     DateTime
+  revokedAt     DateTime?
+
+  // Relations
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@index([institutionId])
+  @@index([publicKey])
+  @@index([keyStatus])
+  @@map("issuer_keys")
+}
+
+/// Official Digital Notices Signed by Authorized Institutions
+model Notice {
+  id               String       @id @default(uuid())
+  institutionId    String
+  title            String
+  contentHash      String       // SHA-256 hex hash of the canonical notice payload
+  signature        String       // Ed25519 cryptographic signature (Base64 / Hex)
+  issuedAt         DateTime     @default(now())
+  expiresAt        DateTime
+  status           NoticeStatus @default(ACTIVE)
+  revocationReason String?
+  revokedAt        DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  // Relations
+  institution         Institution          @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  verificationRecords VerificationRecord[]
+
+  @@index([institutionId])
+  @@index([contentHash])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("notices")
+}
+
+/// Verification Audit Trail
+/// NOTE: Student PII is NEVER stored here or transmitted to the blockchain.
+model VerificationRecord {
+  id           String                   @id @default(uuid())
+  userId       String?                  // Optional anonymous client session identifier
+  noticeId     String?
+  resultStatus VerificationResultStatus
+  riskLevel    RiskLevel                @default(NONE)
+  createdAt    DateTime                 @default(now())
+
+  // Relations
+  notice           Notice?           @relation(fields: [noticeId], references: [id], onDelete: SetNull)
+  securityAnalysis SecurityAnalysis?
+
+  @@index([noticeId])
+  @@index([resultStatus])
+  @@index([createdAt])
+  @@map("verification_records")
+}
+
+/// Secondary Security & AI Risk Analysis (Secondary layer for unverified/suspicious items)
+model SecurityAnalysis {
+  id             String             @id @default(uuid())
+  verificationId String             @unique
+  indicators     Json?              // Anomaly indicators (e.g. domain spoofing, header mismatches)
+  aiAssessment   Json?              // Secondary risk engine score and explanations
+  createdAt      DateTime           @default(now())
+
+  // Relations
+  verification   VerificationRecord @relation(fields: [verificationId], references: [id], onDelete: Cascade)
+
+  @@map("security_analyses")
+}

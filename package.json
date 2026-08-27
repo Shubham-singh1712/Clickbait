@@ -1,0 +1,52 @@
+{
+  "name": "clickbait-backend",
+  "version": "0.1.0",
+  "description": "Backend services, Ed25519 cryptographic verification, trusted public-key registry, and blockchain provenance adapter for CLICKBAIT (SIH 2026)",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "rimraf dist && tsc",
+    "start": "node dist/server.js",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "clickbait",
+    "cryptography",
+    "ed25519",
+    "blockchain",
+    "cybersecurity",
+    "sih2026",
+    "digital-signatures",
+    "provenance"
+  ],
+  "author": "CLICKBAIT Team - Member 3",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.4",
+    "@types/supertest": "^6.0.2",
+    "jest": "^29.7.0",
+    "prisma": "^5.22.0",
+    "rimraf": "^6.0.1",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
