@@ -138,6 +138,21 @@ export class VerificationController {
       next(error);
     }
   }
+
+  /**
+   * POST /api/verify/unified or POST /api/analyze
+   * Master end-to-end evidence orchestration endpoint.
+   */
+  public async unifiedAnalyze(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { unifiedOrchestrator } = await import('../services/verification/unified-orchestrator.service');
+      const result = await unifiedOrchestrator.orchestrate(req.body);
+      ResponseUtil.success(res, result, 'Unified evidence assessment generated');
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const verificationController = new VerificationController();
+

@@ -3,6 +3,7 @@ import authRoutes from './auth.routes';
 import institutionRoutes from './institution.routes';
 import noticeRoutes from './notice.routes';
 import verificationRoutes from './verification.routes';
+import { verificationController } from '../controllers/verification.controller';
 import { ResponseUtil } from '../utils/api-response';
 
 const router = Router();
@@ -26,5 +27,8 @@ router.use('/auth', authRoutes);
 router.use('/institutions', institutionRoutes);
 router.use('/notices', noticeRoutes);
 router.use('/verify', verificationRoutes);
+router.post('/analyze', (req, res, next) => verificationController.unifiedAnalyze(req, res, next));
 
 export default router;
+
+
